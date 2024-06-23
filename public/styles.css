@@ -1,37 +1,99 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #000;
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
 }
 
 .container {
-    text-align: center;
+  background-color: #34495e;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
 h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  color: #3498db;
+}
+
+.timer-container {
+  background-color: #2c3e50;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 #timer {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+  font-size: 4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+#status {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: #bdc3c7;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
 }
 
 #toggleBtn {
-    font-size: 1.5rem;
-    padding: 0.5rem 1rem;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
+  background-color: #2ecc71;
+  color: white;
 }
 
 #toggleBtn:hover {
-    background-color: #45a049;
+  background-color: #27ae60;
+}
+
+#resetBtn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+#resetBtn:hover {
+  background-color: #c0392b;
+}
+
+#fastForwardBtn {
+  background-color: #f39c12;
+  color: white;
+}
+
+#fastForwardBtn:hover {
+  background-color: #d35400;
+}
+
+#sessionCount {
+  font-size: 1.2rem;
+  color: #bdc3c7;
 }
