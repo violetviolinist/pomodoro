@@ -97,3 +97,23 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Configure SSH
+        env:
+          SSH_USER: ${{ secrets.OVH_SSH_USER }}
+          SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          SSH_HOST: ${{ secrets.OVH_SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ovh.key
+          chmod 600 ~/.ssh/ovh.key
+          cat >>~/.ssh/config <<END
+          Host ovh
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ovh.key
+            StrictHostKeyChecking no
+          END
+
+      - name: Run deploy shell script
+        run: ssh ovh /home/jay/deploy-pomodoro.sh
