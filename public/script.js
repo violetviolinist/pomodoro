@@ -3,13 +3,15 @@ $(document).ready(function() {
   const statusDisplay = $('#status');
   const toggleBtn = $('#toggleBtn');
   const resetBtn = $('#resetBtn');
-  const fastForwardBtn = $('#fastForwardBtn');
+  const nextSessionBtn = $('#nextSessionBtn');
+  const extendBtn = $('#extendBtn');
   const sessionCountDisplay = $('#sessionCount');
 
   const WORK_TIME = 25 * 60;
   const SHORT_BREAK_TIME = 5 * 60;
   const LONG_BREAK_TIME = 15 * 60;
   const SESSIONS_BEFORE_LONG_BREAK = 4;
+  const EXTENSION_TIME = 5 * 60;
 
   let timeLeft = WORK_TIME;
   let timerInterval;
@@ -37,7 +39,7 @@ $(document).ready(function() {
               timeLeft--;
               updateDisplay();
           } else {
-              completeSession();
+              endSession();
           }
       }, 1000);
   }
@@ -46,8 +48,14 @@ $(document).ready(function() {
       clearInterval(timerInterval);
   }
 
-  function completeSession() {
+  function endSession() {
       clearInterval(timerInterval);
+      isRunning = false;
+      toggleBtn.text('Resume');
+      updateDisplay();
+  }
+
+  function startNextSession() {
       if (isWorkSession) {
           sessionCount++;
           sessionCountDisplay.text(`Sessions: ${sessionCount}`);
@@ -61,10 +69,10 @@ $(document).ready(function() {
           isWorkSession = true;
           timeLeft = WORK_TIME;
       }
+      endSession();
       updateStatus();
       updateDisplay();
-      isRunning = false;
-      toggleBtn.text('Start');
+      toggleBtn.text('Start')
   }
 
   function resetTimer() {
@@ -81,25 +89,30 @@ $(document).ready(function() {
       }
   }
 
-  toggleBtn.on('click', function() {
+  function extendTimer() {
+      timeLeft += EXTENSION_TIME;
+      updateDisplay();
       if (isRunning) {
-          stopTimer();
-          toggleBtn.text('Resume');
-      } else {
-          startTimer();
-          toggleBtn.text('Pause');
+        startTimer();
       }
-      isRunning = !isRunning;
+  }
+
+  toggleBtn.on('click', function() {
+      if (timeLeft > 0) {
+          if (isRunning) {
+              stopTimer();
+              toggleBtn.text('Resume');
+          } else {
+              startTimer();
+              toggleBtn.text('Pause');
+          }
+          isRunning = !isRunning;
+      }
   });
 
   resetBtn.on('click', resetTimer);
-
-  fastForwardBtn.on('click', function() {
-      if (isRunning) {
-          stopTimer();
-      }
-      completeSession();
-  });
+  nextSessionBtn.on('click', startNextSession);
+  extendBtn.on('click', extendTimer);
 
   updateStatus();
   updateDisplay();
