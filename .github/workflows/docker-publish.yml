@@ -116,4 +116,4 @@ jobs:
           END
 
       - name: Run deploy shell script
-        run: ssh ovh /home/jay/deploy-pomodoro.sh
+        run: ssh ovh "ssh beelink-zt /home/jay/deploy-pomodoro.sh"
