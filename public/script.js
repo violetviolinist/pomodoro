@@ -92,9 +92,6 @@ $(document).ready(function() {
   function extendTimer() {
       timeLeft += EXTENSION_TIME;
       updateDisplay();
-      if (isRunning) {
-        startTimer();
-      }
   }
 
   toggleBtn.on('click', function() {
