@@ -8,8 +8,8 @@ $(document).ready(function() {
   const enableNotifsBtn = $('#enableNotifsBtn');
   const sessionCountDisplay = $('#sessionCount');
 
-  const WORK_TIME = 3;
-  const SHORT_BREAK_TIME = 2;
+  const WORK_TIME = 25 * 60;
+  const SHORT_BREAK_TIME = 5 * 60;
   const LONG_BREAK_TIME = 15 * 60;
   const SESSIONS_BEFORE_LONG_BREAK = 4;
   const EXTENSION_TIME = 5 * 60;
