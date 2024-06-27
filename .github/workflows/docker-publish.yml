@@ -78,7 +78,7 @@ jobs:
           file: beelink.Dockerfile
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: violetviolinist/pomorodo-app:latest
+          tags: violetviolinist/pomodoro-app:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
