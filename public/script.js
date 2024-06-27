@@ -5,24 +5,40 @@ $(document).ready(function() {
   const resetBtn = $('#resetBtn');
   const nextSessionBtn = $('#nextSessionBtn');
   const extendBtn = $('#extendBtn');
+  const enableNotifsBtn = $('#enableNotifsBtn');
   const sessionCountDisplay = $('#sessionCount');
 
-  const WORK_TIME = 25 * 60;
-  const SHORT_BREAK_TIME = 5 * 60;
+  const WORK_TIME = 3;
+  const SHORT_BREAK_TIME = 2;
   const LONG_BREAK_TIME = 15 * 60;
   const SESSIONS_BEFORE_LONG_BREAK = 4;
   const EXTENSION_TIME = 5 * 60;
 
   let timeLeft = WORK_TIME;
-  let timerInterval;
   let isRunning = false;
   let isWorkSession = true;
   let sessionCount = 0;
 
+  function askNotificationPermission() {
+    console.log("called permission")
+    // Check if the browser supports notifications
+    if (!("Notification" in window)) {
+      alert("This browser does not support notifications.");
+      return;
+    }
+    Notification.requestPermission().then((permission) => {
+      alert("success")
+      // set the button to shown or hidden, depending on what the user answers
+      // enableNotifsBtn.style.display = permission === "granted" ? "none" : "block";
+    });
+  }
+
   function updateDisplay() {
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
-      timerDisplay.text(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+      const timeAsString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      timerDisplay.text(timeAsString);
+      updateTitle(timeAsString)
   }
 
   function updateStatus() {
@@ -33,25 +49,39 @@ $(document).ready(function() {
       }
   }
 
+  function updateTitle(newTitle) {
+    document.title = newTitle
+  }
+
+  function tick() {
+    if (isRunning) {
+      if (timeLeft > 0) {
+        timeLeft--;
+        updateDisplay();
+        if (timeLeft == 0) {
+          endSession()
+        } else {
+        setTimeout(tick, 1000);
+        }
+      }
+    }
+  }
+
   function startTimer() {
-      timerInterval = setInterval(() => {
-          if (timeLeft > 0) {
-              timeLeft--;
-              updateDisplay();
-          } else {
-              endSession();
-          }
-      }, 1000);
+      isRunning = true;
+      tick();
   }
 
   function stopTimer() {
-      clearInterval(timerInterval);
+      isRunning = false;
   }
 
   function endSession() {
-      clearInterval(timerInterval);
       isRunning = false;
       toggleBtn.text('Resume');
+      new Notification("Session ended!", {
+        silent: false,
+      })
       updateDisplay();
   }
 
@@ -103,13 +133,13 @@ $(document).ready(function() {
               startTimer();
               toggleBtn.text('Pause');
           }
-          isRunning = !isRunning;
       }
   });
-
   resetBtn.on('click', resetTimer);
   nextSessionBtn.on('click', startNextSession);
   extendBtn.on('click', extendTimer);
+
+  enableNotifsBtn.on('click', askNotificationPermission);
 
   updateStatus();
   updateDisplay();
