@@ -15,8 +15,12 @@ function tick() {
   if (isRunning) {
     if (timeLeft > 0) {
       timeLeft--;
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      const timeAsString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       postMessage({
         operation: "updateDisplay",
+        data: timeAsString,
       })
       if (timeLeft == 0) {
         endSession()
