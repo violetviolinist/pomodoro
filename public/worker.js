@@ -9,18 +9,23 @@ let isRunning = false;
 let isWorkSession = true;
 let sessionCount = 0;
 
-const worker = new Worker("/worker.js")
+const getTimeAsString = (time) => {
+  const minutes = Math.floor(time / 60);
+  const seconds = time % 60;
+  const timeAsString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  return timeAsString
+}
 
 function tick() {
   if (isRunning) {
     if (timeLeft > 0) {
       timeLeft--;
-      const minutes = Math.floor(timeLeft / 60);
-      const seconds = timeLeft % 60;
-      const timeAsString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       postMessage({
         operation: "updateDisplay",
-        data: timeAsString,
+        data: {
+          timeAsString: getTimeAsString(timeLeft),
+        },
       })
       if (timeLeft == 0) {
         endSession()
@@ -50,7 +55,6 @@ function endSession() {
 function startNextSession() {
     if (isWorkSession) {
         sessionCount++;
-        sessionCountDisplay.text(`Sessions: ${sessionCount}`);
         isWorkSession = false;
         if (sessionCount % SESSIONS_BEFORE_LONG_BREAK === 0) {
             timeLeft = LONG_BREAK_TIME;
@@ -61,6 +65,13 @@ function startNextSession() {
         isWorkSession = true;
         timeLeft = WORK_TIME;
     }
+
+    postMessage({
+      operation: "updateSessionCount",
+      data: {
+        sessionCount,
+      },
+    })
 }
 
 function resetTimer() {
@@ -69,6 +80,12 @@ function resetTimer() {
   sessionCount = 0;
   timeLeft = WORK_TIME;
   isRunning = false;
+  postMessage({
+    operation: "resetTimerAck",
+    data: {
+      timeAsString: getTimeAsString(timeLeft)
+    },
+  })
 }
 
 function extendTimer() {
@@ -86,7 +103,7 @@ function playOrResume() {
         },
       })
     } else {
-        startTimerI()
+        startTimer()
         postMessage({
           operation: "setMainButton",
           data: {
@@ -97,19 +114,20 @@ function playOrResume() {
   }
 }
 
-worker.onmessage = (msg) => {
+onmessage = (msg) => {
   const { data, operation } = msg.data;
 
   if (operation === "startNextSession") {
     startNextSession()
     postMessage({
-      operation: "ACK:startNextSession",
+      operation: "startNextSessionAck",
       data: {
+        timeAsString: getTimeAsString(timeLeft),
         sessionCount,
         isWorkSession,
       },
     })
-  } else if (oprationr === "resetTimer") {
+  } else if (operation === "resetTimer") {
     resetTimer()
   } else if (operation === "extendTimer") {
     extendTimer()

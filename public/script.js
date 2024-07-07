@@ -38,6 +38,10 @@ $(document).ready(function() {
     document.title = newTitle
   }
 
+  function updateSessionCount({ sessionCount }) {
+    sessionCountDisplay.text(`Sessions: ${sessionCount}`);
+  }
+
   function endSession() {
       toggleBtn.text('Resume');
       new Notification("Session ended!", {
@@ -53,26 +57,31 @@ $(document).ready(function() {
   }
 
   function startNextSessionAck({
+    timeAsString,
     sessionCount,
     isWorkSession,
   }) {
     sessionCountDisplay.text(`Sessions: ${sessionCount}`);
     endSession();
     updateStatus(isWorkSession);
-    updateDisplay();
+    updateDisplay(timeAsString);
     toggleBtn.text('Start')
   }
 
   function resetTimer() {
-      if (confirm("Are you sure you want to reset the timer?")) {
-        worker.postMessage({
-          operation: "resetTimer",
-        })
-        toggleBtn.text('Start');
-        updateStatus(true);
-        updateDisplay();
-        sessionCountDisplay.text('Sessions: 0');
-      }
+    if (confirm("Are you sure you want to reset the timer?")) {
+      worker.postMessage({
+        operation: "resetTimer",
+      })
+    }
+  }
+  function resetTimerAck({
+    timeAsString,
+  }) {
+    toggleBtn.text('Start');
+    updateStatus(true);
+    updateDisplay(timeAsString);
+    sessionCountDisplay.text('Sessions: 0');
   }
 
   function extendTimer() {
@@ -106,8 +115,12 @@ $(document).ready(function() {
       endSession()
     } else if (operation === "setMainButton") {
       setMainButton(data.str)
+    } else if (operation === "updateSessionCount") {
+      updateSessionCount(data)
     } else if (operation === "startNextSessionAck") {
       startNextSessionAck(data)
+    } else if (operation === "resetTimerAck") {
+      resetTimerAck(data)
     }
   }
 
