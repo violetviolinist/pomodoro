@@ -48,11 +48,14 @@ function stopTimer() {
 function endSession() {
     isRunning = false;
     postMessage({
-      operation: "endSession",
+      operation: "endSessionAck",
+      data: {
+        timeAsString: getTimeAsString(timeLeft),
+      },
     })
 }
 
-function startNextSession() {
+function skipToNextSession() {
     if (isWorkSession) {
         sessionCount++;
         isWorkSession = false;
@@ -65,13 +68,7 @@ function startNextSession() {
         isWorkSession = true;
         timeLeft = WORK_TIME;
     }
-
-    postMessage({
-      operation: "updateSessionCount",
-      data: {
-        sessionCount,
-      },
-    })
+    endSession()
 }
 
 function resetTimer() {
@@ -80,12 +77,6 @@ function resetTimer() {
   sessionCount = 0;
   timeLeft = WORK_TIME;
   isRunning = false;
-  postMessage({
-    operation: "resetTimerAck",
-    data: {
-      timeAsString: getTimeAsString(timeLeft)
-    },
-  })
 }
 
 function extendTimer() {
@@ -114,13 +105,20 @@ function playOrResume() {
   }
 }
 
+postMessage({
+  operation: "updateDisplay",
+  data: {
+    timeAsString: getTimeAsString(timeLeft),
+  },
+})
+
 onmessage = (msg) => {
   const { data, operation } = msg.data;
 
-  if (operation === "startNextSession") {
-    startNextSession()
+  if (operation === "skipToNextSession") {
+    skipToNextSession()
     postMessage({
-      operation: "startNextSessionAck",
+      operation: "skipToNextSessionAck",
       data: {
         timeAsString: getTimeAsString(timeLeft),
         sessionCount,
@@ -129,8 +127,20 @@ onmessage = (msg) => {
     })
   } else if (operation === "resetTimer") {
     resetTimer()
+    postMessage({
+      operation: "resetTimerAck",
+      data: {
+        timeAsString: getTimeAsString(timeLeft)
+      },
+    })
   } else if (operation === "extendTimer") {
     extendTimer()
+    postMessage({
+      operation: "extendTimerAck",
+      data: {
+        timeAsString: getTimeAsString(timeLeft),
+      },
+    })
   } else if (operation === "play/resume") {
     playOrResume()
   }

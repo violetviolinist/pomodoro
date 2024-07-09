@@ -1,3 +1,5 @@
+const SESSIONS_BEFORE_LONG_BREAK = 4
+
 $(document).ready(function() {
   const timerDisplay = $('#timer');
   const statusDisplay = $('#status');
@@ -10,7 +12,7 @@ $(document).ready(function() {
 
   const worker = new Worker("/worker.js")
 
-  function askNotificationPermission() { 
+  function askNotificationPermission() {
     // Check if the browser supports notifications
     if (!("Notification" in window)) {
       alert("This browser does not support notifications.");
@@ -42,29 +44,26 @@ $(document).ready(function() {
     sessionCountDisplay.text(`Sessions: ${sessionCount}`);
   }
 
-  function endSession() {
-      toggleBtn.text('Resume');
+  function endSessionAck({ timeAsString }) {
       new Notification("Session ended!", {
         silent: false,
       })
-      updateDisplay();
+      updateDisplay(timeAsString);
   }
 
-  function startNextSession() {
+  function skipToNextSession() {
     worker.postMessage({
-      operation: "startNextSession",
+      operation: "skipToNextSession",
     })
   }
 
-  function startNextSessionAck({
+  function skipToNextSessionAck({
     timeAsString,
     sessionCount,
     isWorkSession,
   }) {
     sessionCountDisplay.text(`Sessions: ${sessionCount}`);
-    endSession();
     updateStatus(isWorkSession);
-    updateDisplay(timeAsString);
     toggleBtn.text('Start')
   }
 
@@ -88,7 +87,9 @@ $(document).ready(function() {
     worker.postMessage({
       operation: "extendTimer",
     })
-    updateDisplay();
+  }
+  function extendTimerAck({ timeAsString }) {
+    updateDisplay(timeAsString)
   }
 
   function setMainButton (str) {
@@ -101,29 +102,36 @@ $(document).ready(function() {
     })
   });
   resetBtn.on('click', resetTimer);
-  nextSessionBtn.on('click', startNextSession);
+  nextSessionBtn.on('click', skipToNextSession);
   extendBtn.on('click', extendTimer);
 
   enableNotifsBtn.on('click', askNotificationPermission);
+
+  document.addEventListener("keypress", (e) => {
+    if (e.key === " ") {
+      toggleBtn.click();
+    }
+  })
 
   worker.onmessage = (msg) => {
     const { operation, data } = msg.data;
 
     if (operation === "updateDisplay") {
       updateDisplay(data.timeAsString);
-    } else if (operation === "endSession") {
-      endSession()
+    } else if (operation === "endSessionAck") {
+      endSessionAck(data)
     } else if (operation === "setMainButton") {
       setMainButton(data.str)
     } else if (operation === "updateSessionCount") {
       updateSessionCount(data)
-    } else if (operation === "startNextSessionAck") {
-      startNextSessionAck(data)
+    } else if (operation === "skipToNextSessionAck") {
+      skipToNextSessionAck(data)
     } else if (operation === "resetTimerAck") {
       resetTimerAck(data)
+    } else if (operation === "extendTimerAck") {
+      extendTimerAck(data)
     }
   }
 
   updateStatus(true);
-  updateDisplay();
 });
