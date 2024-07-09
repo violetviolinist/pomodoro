@@ -30,6 +30,25 @@ function getSessionLabel({
   return sessionLabel
 }
 
+function sendUpdateElementsMessage() {
+  const timeAsString = getTimeAsString(timeLeft)
+  const newSessionLabel = getSessionLabel({
+    isWorkSession,
+    sessionCount,
+    sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
+  })
+
+  postMessage({
+    operation: "updateElements",
+    data: {
+      timeAsString,
+      newSessionLabel,
+      sessionCount,
+      controlButtonText,
+    },
+  })
+}
+
 function tick() {
   if (isRunning) {
     if (timeLeft > 0) {
@@ -44,32 +63,47 @@ function tick() {
         setTimeout(tick, 1000);
       }
     }
-    postMessage({
-      operation: "updateElements",
-      data: {
-        timeAsString: getTimeAsString(timeLeft),
-        newSessionLabel: getSessionLabel({
-          isWorkSession,
-          sessionCount,
-          sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
-        }),
-        sessionCount,
-        controlButtonText,
-      },
-    })
+    sendUpdateElementsMessage()
   }
 }
 
 function startTimer() {
+  if (!isRunning) {
+    const logType = isWorkSession ? 'WORK_START' : 'BREAK_START';
+    fetch('/log', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ type: logType })
+    })
+    .catch(error => {
+      alert("Error logging session start.")
+    });
+  }
   isRunning = true;
   tick();
 }
 
 function stopTimer() {
+  if (isRunning) {
+    const logType = isWorkSession ? 'WORK_STOP' : 'BREAK_STOP';
+    fetch('/log', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ type: logType })
+    })
+    .catch(error => {
+      alert("Error logging session end.")
+    });
+  }
   isRunning = false;
 }
 
 function skipToNextSession() {
+    stopTimer()
     if (isWorkSession) {
         sessionCount++;
         isWorkSession = false;
@@ -82,7 +116,6 @@ function skipToNextSession() {
         isWorkSession = true;
         timeLeft = WORK_TIME;
     }
-    stopTimer()
     controlButtonText = "Start"
 }
 
@@ -123,21 +156,6 @@ onmessage = (msg) => {
   } else if (operation === "controlButtonClick") {
     doControlButtonClick()
   }
-
-  const timeAsString = getTimeAsString(timeLeft)
-  const newSessionLabel = getSessionLabel({
-    isWorkSession,
-    sessionCount,
-    sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
-  })
-
-  postMessage({
-    operation: "updateElements",
-    data: {
-      timeAsString,
-      newSessionLabel,
-      sessionCount,
-      controlButtonText,
-    },
-  })
+  
+  sendUpdateElementsMessage()
 }
