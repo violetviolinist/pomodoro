@@ -18,94 +18,67 @@ $(document).ready(function() {
       alert("This browser does not support notifications.");
       return;
     }
-    Notification.requestPermission().then((permission) => {
-      alert("success")
+    Notification.requestPermission().then(() => {
+      alert("Notifications are on!")
     });
   }
 
-  function updateDisplay(timeAsString) {
+  function updateTimerDisplay({ timeAsString }) {
     timerDisplay.text(timeAsString);
-    updateTitle(timeAsString)
   }
 
-  function updateStatus(isWorkSession) {
-      if (isWorkSession) {
-          statusDisplay.text('Work Session');
-      } else {
-          statusDisplay.text(sessionCount % SESSIONS_BEFORE_LONG_BREAK === 0 ? 'Long Break' : 'Short Break');
-      }
-  }
-
-  function updateTitle(newTitle) {
+  function updateTitle({ newTitle }) {
     document.title = newTitle
+  }
+
+  function updateSessionLabel({ newSessionLabel }) {
+    statusDisplay.text(newSessionLabel)
   }
 
   function updateSessionCount({ sessionCount }) {
     sessionCountDisplay.text(`Sessions: ${sessionCount}`);
   }
 
-  function endSessionAck({ timeAsString }) {
-      new Notification("Session ended!", {
-        silent: false,
-      })
-      updateDisplay(timeAsString);
+  function updateControlButtonText({ controlButtonText }) {
+    toggleBtn.text(controlButtonText)
   }
 
-  function skipToNextSession() {
-    worker.postMessage({
-      operation: "skipToNextSession",
-    })
-  }
-
-  function skipToNextSessionAck({
+  function updateElements({
     timeAsString,
+    newSessionLabel,
     sessionCount,
-    isWorkSession,
+    controlButtonText,
   }) {
-    sessionCountDisplay.text(`Sessions: ${sessionCount}`);
-    updateStatus(isWorkSession);
-    toggleBtn.text('Start')
+    updateTimerDisplay({ timeAsString })
+    updateTitle({ newTitle: timeAsString })
+    updateSessionLabel({ newSessionLabel })
+    updateSessionCount({ sessionCount })
+    updateControlButtonText({ controlButtonText })
   }
 
-  function resetTimer() {
+  enableNotifsBtn.on('click', askNotificationPermission);
+  toggleBtn.on('click', function() {
+    worker.postMessage({
+      operation: "controlButtonClick"
+    })
+  });
+  resetBtn.on('click', () => {
     if (confirm("Are you sure you want to reset the timer?")) {
       worker.postMessage({
         operation: "resetTimer",
       })
     }
-  }
-  function resetTimerAck({
-    timeAsString,
-  }) {
-    toggleBtn.text('Start');
-    updateStatus(true);
-    updateDisplay(timeAsString);
-    sessionCountDisplay.text('Sessions: 0');
-  }
-
-  function extendTimer() {
+  });
+  nextSessionBtn.on('click', () => {
+    worker.postMessage({
+      operation: "skipToNextSession",
+    })
+  });
+  extendBtn.on('click', () => {
     worker.postMessage({
       operation: "extendTimer",
     })
-  }
-  function extendTimerAck({ timeAsString }) {
-    updateDisplay(timeAsString)
-  }
-
-  function setMainButton (str) {
-    toggleBtn.text(str)
-  }
-
-  toggleBtn.on('click', function() {
-    worker.postMessage({
-      operation: "play/resume"
-    })
   });
-  resetBtn.on('click', resetTimer);
-  nextSessionBtn.on('click', skipToNextSession);
-  extendBtn.on('click', extendTimer);
-
-  enableNotifsBtn.on('click', askNotificationPermission);
 
   document.addEventListener("keypress", (e) => {
     if (e.key === " ") {
@@ -116,22 +89,12 @@ $(document).ready(function() {
   worker.onmessage = (msg) => {
     const { operation, data } = msg.data;
 
-    if (operation === "updateDisplay") {
-      updateDisplay(data.timeAsString);
-    } else if (operation === "endSessionAck") {
-      endSessionAck(data)
-    } else if (operation === "setMainButton") {
-      setMainButton(data.str)
-    } else if (operation === "updateSessionCount") {
-      updateSessionCount(data)
-    } else if (operation === "skipToNextSessionAck") {
-      skipToNextSessionAck(data)
-    } else if (operation === "resetTimerAck") {
-      resetTimerAck(data)
-    } else if (operation === "extendTimerAck") {
-      extendTimerAck(data)
+    if (operation === "updateElements") {
+      updateElements(data)
+    } else if (operation === "notification") {
+      new Notification(data.text)
     }
   }
 
-  updateStatus(true);
+  updateSessionLabel("Work Session");
 });

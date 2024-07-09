@@ -8,6 +8,7 @@ let timeLeft = WORK_TIME;
 let isRunning = false;
 let isWorkSession = true;
 let sessionCount = 0;
+let controlButtonText = "Start"
 
 const getTimeAsString = (time) => {
   const minutes = Math.floor(time / 60);
@@ -17,42 +18,55 @@ const getTimeAsString = (time) => {
   return timeAsString
 }
 
+function getSessionLabel({
+  isWorkSession,
+  sessionCount,
+  sessionsBeforeLongBreak,
+}) {
+  let sessionLabel = isWorkSession ? "Work Session" : "Short Break";
+  if (!isWorkSession && sessionCount % sessionsBeforeLongBreak === 0) {
+    sessionLabel = "Long Break";
+  }
+  return sessionLabel
+}
+
 function tick() {
   if (isRunning) {
     if (timeLeft > 0) {
       timeLeft--;
-      postMessage({
-        operation: "updateDisplay",
-        data: {
-          timeAsString: getTimeAsString(timeLeft),
-        },
-      })
       if (timeLeft == 0) {
-        endSession()
+        postMessage({
+          operation: "notification",
+          text: "Session ended!",
+        })
+        skipToNextSession()
       } else {
         setTimeout(tick, 1000);
       }
     }
+    postMessage({
+      operation: "updateElements",
+      data: {
+        timeAsString: getTimeAsString(timeLeft),
+        newSessionLabel: getSessionLabel({
+          isWorkSession,
+          sessionCount,
+          sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
+        }),
+        sessionCount,
+        controlButtonText,
+      },
+    })
   }
 }
 
 function startTimer() {
-    isRunning = true;
-    tick();
+  isRunning = true;
+  tick();
 }
 
 function stopTimer() {
-    isRunning = false;
-}
-
-function endSession() {
-    isRunning = false;
-    postMessage({
-      operation: "endSessionAck",
-      data: {
-        timeAsString: getTimeAsString(timeLeft),
-      },
-    })
+  isRunning = false;
 }
 
 function skipToNextSession() {
@@ -68,11 +82,13 @@ function skipToNextSession() {
         isWorkSession = true;
         timeLeft = WORK_TIME;
     }
-    endSession()
+    stopTimer()
+    controlButtonText = "Start"
 }
 
 function resetTimer() {
-  stopTimer();
+  stopTimer()
+  controlButtonText = "Start"
   isWorkSession = true;
   sessionCount = 0;
   timeLeft = WORK_TIME;
@@ -83,65 +99,45 @@ function extendTimer() {
   timeLeft += EXTENSION_TIME;
 }
 
-function playOrResume() {
+function doControlButtonClick() {
   if (timeLeft > 0) {
     if (isRunning) {
       stopTimer()
-      postMessage({
-        operation: "setMainButton",
-        data: {
-          str: "Resume",
-        },
-      })
+      controlButtonText = "Resume"
     } else {
-        startTimer()
-        postMessage({
-          operation: "setMainButton",
-          data: {
-            str: "Pause",
-          },
-        })
+      startTimer()
+      controlButtonText = "Pause"
     }
   }
 }
 
-postMessage({
-  operation: "updateDisplay",
-  data: {
-    timeAsString: getTimeAsString(timeLeft),
-  },
-})
-
 onmessage = (msg) => {
-  const { data, operation } = msg.data;
+  const { operation } = msg.data;
 
   if (operation === "skipToNextSession") {
     skipToNextSession()
-    postMessage({
-      operation: "skipToNextSessionAck",
-      data: {
-        timeAsString: getTimeAsString(timeLeft),
-        sessionCount,
-        isWorkSession,
-      },
-    })
   } else if (operation === "resetTimer") {
     resetTimer()
-    postMessage({
-      operation: "resetTimerAck",
-      data: {
-        timeAsString: getTimeAsString(timeLeft)
-      },
-    })
   } else if (operation === "extendTimer") {
     extendTimer()
-    postMessage({
-      operation: "extendTimerAck",
-      data: {
-        timeAsString: getTimeAsString(timeLeft),
-      },
-    })
-  } else if (operation === "play/resume") {
-    playOrResume()
+  } else if (operation === "controlButtonClick") {
+    doControlButtonClick()
   }
+
+  const timeAsString = getTimeAsString(timeLeft)
+  const newSessionLabel = getSessionLabel({
+    isWorkSession,
+    sessionCount,
+    sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
+  })
+
+  postMessage({
+    operation: "updateElements",
+    data: {
+      timeAsString,
+      newSessionLabel,
+      sessionCount,
+      controlButtonText,
+    },
+  })
 }
