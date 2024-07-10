@@ -95,6 +95,4 @@ $(document).ready(function() {
       new Notification(data.text)
     }
   }
-
-  updateSessionLabel("Work Session");
 });
