@@ -51,7 +51,7 @@ router.get("/", async (req, res, next) => {
 })
 
 router.post("/", async (req, res, next) => {
-  const todayAsString = DateTime.now().toFormat("yyyy_LL_dd")
+  const todayAsString = DateTime.now().setZone("UTC+5:30").toFormat("yyyy_LL_dd")
   const logFilePath = path.join(__dirname, `../workLogs/${todayAsString}.log`)
 
   const newLogEntry = `${req.body.type}:${Date.now()}\n`
