@@ -53,10 +53,20 @@ function tick() {
   if (isRunning) {
     if (timeLeft > 0) {
       timeLeft--;
+      if (isWorkSession && timeLeft === 30) {
+        postMessage({
+          operation: "notification",
+          data: {
+            text: "30 seconds left!",
+          }
+        })
+      }
       if (timeLeft == 0) {
         postMessage({
           operation: "notification",
-          text: "Session ended!",
+          data: {
+            text: "Session ended!",
+          }
         })
         skipToNextSession()
       } else {
