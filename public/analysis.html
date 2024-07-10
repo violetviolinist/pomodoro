@@ -16,8 +16,9 @@
       break: 'rgba(255, 99, 132, 0.6)'
     };
     const formatToHrsMins = (minutes) => {
-      const hours = Math.floor(minutes / 60).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false });
-      const mins = (minutes % 60).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false });
+      const roundedMinutes = Math.round(minutes);
+      const hours = Math.floor(roundedMinutes / 60).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false });
+      const mins = (roundedMinutes % 60).toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false });
       return `${hours}:${mins}`
     }
     async function fetchLogs() {
