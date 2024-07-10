@@ -169,3 +169,5 @@ onmessage = (msg) => {
   
   sendUpdateElementsMessage()
 }
+
+sendUpdateElementsMessage()
