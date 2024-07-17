@@ -12,8 +12,8 @@ const readLogsFromFile = async (filePath) => {
     .split('\n')
     .filter(line => line)
     .map(line => {
-      const [type, timestamp] = line.split(':');
-      return { type, timestamp: parseInt(timestamp) };
+      const [zone, type, timestamp] = line.split(':');
+      return { zone, type, timestamp: parseInt(timestamp) };
     })
   )
   return logs;
@@ -25,7 +25,12 @@ const processLogs = (logs, date) => {
 
   logs.forEach(log => {
     if (log.type.startsWith('WORK_START') || log.type.startsWith('BREAK_START')) {
-      currentSession = { type: log.type.split('_')[0].toLowerCase(), start: log.timestamp, end: null };
+      currentSession = {
+        type: log.type.split('_')[0].toLowerCase(),
+        zone: log.zone,
+        start: log.timestamp,
+        end: null
+      };
     } else if ((log.type.startsWith('WORK_STOP') || log.type.startsWith('BREAK_STOP')) && currentSession) {
       currentSession.end = log.timestamp;
       sessions.push(currentSession);
@@ -54,7 +59,7 @@ router.post("/", async (req, res, next) => {
   const todayAsString = DateTime.now().setZone("UTC+5:30").toFormat("yyyy_LL_dd")
   const logFilePath = path.join(__dirname, `../workLogs/${todayAsString}.log`)
 
-  const newLogEntry = `${req.body.type}:${Date.now()}\n`
+  const newLogEntry = `${req.body.zone}:${req.body.type}:${Date.now()}\n`
 
   await appendFile(logFilePath, newLogEntry)
 

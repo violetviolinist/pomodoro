@@ -4,11 +4,50 @@ const LONG_BREAK_TIME = 15 * 60;
 const SESSIONS_BEFORE_LONG_BREAK = 4;
 const EXTENSION_TIME = 5 * 60;
 
-let timeLeft = WORK_TIME;
-let isRunning = false;
-let isWorkSession = true;
-let sessionCount = 0;
-let controlButtonText = "Start"
+let savedStates = {
+  WORKPLACE: {
+    timeLeft: WORK_TIME,
+    isRunning: false,
+    isWorkSession: true,
+    sessionCount: 0,
+    controlButtonText: "Start",
+  },
+  personal: {
+    timeLeft: WORK_TIME,
+    isRunning: false,
+    isWorkSession: true,
+    sessionCount: 0,
+    controlButtonText: "Start",
+  }
+}
+
+let currentZone = "WORKPLACE"
+let currentState = {
+  timeLeft: WORK_TIME,
+  isRunning: false,
+  isWorkSession: true,
+  sessionCount: 0,
+  controlButtonText: "Start",
+}
+
+const postLogEntry = ({
+  logType,
+  zone
+}) => {
+  fetch('/log', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      type: logType,
+      zone,
+    })
+  })
+  .catch(error => {
+    alert("Error logging session start.")
+  });
+}
 
 const getTimeAsString = (time) => {
   const minutes = Math.floor(time / 60);
@@ -31,10 +70,10 @@ function getSessionLabel({
 }
 
 function sendUpdateElementsMessage() {
-  const timeAsString = getTimeAsString(timeLeft)
+  const timeAsString = getTimeAsString(currentState.timeLeft)
   const newSessionLabel = getSessionLabel({
-    isWorkSession,
-    sessionCount,
+    isWorkSession: currentState.isWorkSession,
+    sessionCount: currentState.sessionCount,
     sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
   })
 
@@ -43,17 +82,23 @@ function sendUpdateElementsMessage() {
     data: {
       timeAsString,
       newSessionLabel,
-      sessionCount,
-      controlButtonText,
+      sessionCount: currentState.sessionCount,
+      controlButtonText: currentState.controlButtonText,
     },
   })
 }
 
+function changeZone({ newZone }) {
+  savedStates[currentZone] = currentState
+  currentZone = newZone
+  currentState = savedStates[currentZone]
+}
+
 function tick() {
-  if (isRunning) {
-    if (timeLeft > 0) {
-      timeLeft--;
-      if (isWorkSession && timeLeft === 30) {
+  if (currentState.isRunning) {
+    if (currentState.timeLeft > 0) {
+      currentState.timeLeft--;
+      if (currentState.isWorkSession && currentState.timeLeft === 30) {
         postMessage({
           operation: "notification",
           data: {
@@ -61,7 +106,7 @@ function tick() {
           }
         })
       }
-      if (timeLeft == 0) {
+      if (currentState.timeLeft == 0) {
         postMessage({
           operation: "notification",
           data: {
@@ -78,84 +123,72 @@ function tick() {
 }
 
 function startTimer() {
-  if (!isRunning) {
-    const logType = isWorkSession ? 'WORK_START' : 'BREAK_START';
-    fetch('/log', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ type: logType })
+  if (!currentState.isRunning) {
+    const logType = currentState.isWorkSession ? 'WORK_START' : 'BREAK_START';
+    postLogEntry({
+      logType,
+      zone: currentZone,
     })
-    .catch(error => {
-      alert("Error logging session start.")
-    });
   }
-  isRunning = true;
+  currentState.isRunning = true;
   tick();
 }
 
 function stopTimer() {
-  if (isRunning) {
-    const logType = isWorkSession ? 'WORK_STOP' : 'BREAK_STOP';
-    fetch('/log', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ type: logType })
+  if (currentState.isRunning) {
+    const logType = currentState.isWorkSession ? 'WORK_STOP' : 'BREAK_STOP';
+    postLogEntry({
+      logType,
+      zone: currentZone,
     })
-    .catch(error => {
-      alert("Error logging session end.")
-    });
   }
-  isRunning = false;
+  currentState.isRunning = false;
 }
 
 function skipToNextSession() {
     stopTimer()
-    if (isWorkSession) {
-        sessionCount++;
-        isWorkSession = false;
-        if (sessionCount % SESSIONS_BEFORE_LONG_BREAK === 0) {
-            timeLeft = LONG_BREAK_TIME;
+    if (currentState.isWorkSession) {
+        currentState.sessionCount++;
+        currentState.isWorkSession = false;
+        if (currentState.sessionCount % SESSIONS_BEFORE_LONG_BREAK === 0) {
+            currentState.timeLeft = LONG_BREAK_TIME;
         } else {
-            timeLeft = SHORT_BREAK_TIME;
+            currentState.timeLeft = SHORT_BREAK_TIME;
         }
     } else {
-        isWorkSession = true;
-        timeLeft = WORK_TIME;
+        currentState.isWorkSession = true;
+        currentState.timeLeft = WORK_TIME;
     }
-    controlButtonText = "Start"
+    currentState.controlButtonText = "Start"
 }
 
 function resetTimer() {
   stopTimer()
-  controlButtonText = "Start"
-  isWorkSession = true;
-  sessionCount = 0;
-  timeLeft = WORK_TIME;
-  isRunning = false;
+  currentState.controlButtonText = "Start"
+  currentState.isWorkSession = true;
+  currentState.sessionCount = 0;
+  currentState.timeLeft = WORK_TIME;
+  currentState.isRunning = false;
 }
 
 function extendTimer() {
-  timeLeft += EXTENSION_TIME;
+  currentState.timeLeft += EXTENSION_TIME;
 }
 
 function doControlButtonClick() {
-  if (timeLeft > 0) {
-    if (isRunning) {
+  if (currentState.timeLeft > 0) {
+    if (currentState.isRunning) {
       stopTimer()
-      controlButtonText = "Resume"
+      currentState.controlButtonText = "Resume"
     } else {
       startTimer()
-      controlButtonText = "Pause"
+      currentState.controlButtonText = "Pause"
     }
   }
 }
 
 onmessage = (msg) => {
-  const { operation } = msg.data;
+  const { operation, data } = msg.data;
 
   if (operation === "skipToNextSession") {
     skipToNextSession()
@@ -165,6 +198,8 @@ onmessage = (msg) => {
     extendTimer()
   } else if (operation === "controlButtonClick") {
     doControlButtonClick()
+  } else if (operation === "changeZone") {
+    changeZone(data)
   }
   
   sendUpdateElementsMessage()

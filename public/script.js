@@ -9,6 +9,7 @@ $(document).ready(function() {
   const extendBtn = $('#extendBtn');
   const enableNotifsBtn = $('#enableNotifsBtn');
   const sessionCountDisplay = $('#sessionCount');
+  const zoneSelector = $('#zoneSelector');
 
   const worker = new Worker("/worker.js")
 
@@ -79,6 +80,14 @@ $(document).ready(function() {
       operation: "extendTimer",
     })
   });
+  zoneSelector.on('change', () => {
+    worker.postMessage({
+      operation: "changeZone",
+      data: {
+        newZone: zoneSelector.val()
+      }
+    })
+  })
 
   document.addEventListener("keypress", (e) => {
     if (e.key === " ") {

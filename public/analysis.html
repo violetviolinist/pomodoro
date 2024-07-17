@@ -11,7 +11,11 @@
   <canvas id="logChart"></canvas>
   <script>
     const DateTime = luxon.DateTime
-    const colorMap = {
+    const zoneColorMap = {
+      personal: 'rgba(54, 162, 235, 0.6)',
+      workplace: 'rgba(184, 222, 87, 0.6)',
+    }
+    const sessionTypeColorMap = {
       work: 'rgba(184, 222, 87, 0.6)',
       break: 'rgba(255, 99, 132, 0.6)'
     };
@@ -41,7 +45,11 @@
           const sessionEndDateTime = DateTime.fromMillis(session.end)
           const xAxisValue = [sessionStartDateTime.diff(startOfDay, "minutes").minutes, sessionEndDateTime.diff(startOfDay, "minutes").minutes]
           workDataSet.data.push({ x: xAxisValue, y: yAxisValue });
-          workDataSet.backgroundColor.push(colorMap[session.type])
+          let bgColor = sessionTypeColorMap[session.type]
+          if (session.type === "work") {
+            bgColor = zoneColorMap[session.zone?.toLowerCase()]
+          }
+          workDataSet.backgroundColor.push(bgColor)
         })
       })
 
