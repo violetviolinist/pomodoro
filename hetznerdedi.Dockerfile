@@ -8,8 +8,6 @@ WORKDIR /app
 COPY package*.json ./
 COPY public public
 COPY server.js server.js
-COPY routes routes
-COPY workLogs workLogs
 
 # Install the Node.js dependencies
 RUN npm install --production
