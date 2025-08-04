@@ -30,25 +30,6 @@ let currentState = {
   controlButtonText: "Start",
 }
 
-const postLogEntry = ({
-  logType,
-  zone
-}) => {
-  fetch('/log', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      type: logType,
-      zone,
-    })
-  })
-  .catch(error => {
-    alert("Error logging session start.")
-  });
-}
-
 const getTimeAsString = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = time % 60;
@@ -123,25 +104,11 @@ function tick() {
 }
 
 function startTimer() {
-  if (!currentState.isRunning) {
-    const logType = currentState.isWorkSession ? 'WORK_START' : 'BREAK_START';
-    postLogEntry({
-      logType,
-      zone: currentZone,
-    })
-  }
   currentState.isRunning = true;
   tick();
 }
 
 function stopTimer() {
-  if (currentState.isRunning) {
-    const logType = currentState.isWorkSession ? 'WORK_STOP' : 'BREAK_STOP';
-    postLogEntry({
-      logType,
-      zone: currentZone,
-    })
-  }
   currentState.isRunning = false;
 }
 
