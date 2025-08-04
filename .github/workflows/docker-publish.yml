@@ -100,20 +100,15 @@ jobs:
 
       - name: Configure SSH
         env:
-          SSH_USER: ${{ secrets.OVH_SSH_USER }}
-          SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
-          SSH_HOST: ${{ secrets.OVH_SSH_HOST }}
+          SSH_USER: ${{ secrets.HETZNERDEDI_SSH_USER }}
+          SSH_KEY: ${{ secrets.HETZNERDEDI_SSH_KEY }}
+          SSH_HOST: ${{ secrets.HETZNERDEDI_SSH_HOST }}
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ovh.key
-          chmod 600 ~/.ssh/ovh.key
-          cat >>~/.ssh/config <<END
-          Host ovh
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ovh.key
-            StrictHostKeyChecking no
-          END
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/hetznerdedi
+          chmod 600 ~/.ssh/hetznerdedi
+          ssh-keyscan -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Run deploy shell script
-        run: ssh ovh "ssh beelink-zt /home/jay/deploy-pomodoro.sh"
+      - name: Deploy to Hetzner Dedi
+        run: |
+          ssh ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} "bash /home/jay/deploy-pomodoro.sh"
