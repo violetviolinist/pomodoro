@@ -111,4 +111,4 @@ jobs:
 
       - name: Deploy to Hetzner Dedi
         run: |
-          ssh ${{ secrets.HETZNERDEDI_SSH_USER }}@${{ secrets.HETZNERDEDI_SSH_HOST }} "bash /home/jay/deploy-pomodoro.sh"
+          ssh -i ~/.ssh/hetznerdedi ${{ secrets.HETZNERDEDI_SSH_USER }}@${{ secrets.HETZNERDEDI_SSH_HOST }} "bash /home/jay/deploy-pomodoro.sh"
