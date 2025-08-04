@@ -105,10 +105,10 @@ jobs:
           SSH_HOST: ${{ secrets.HETZNERDEDI_SSH_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/hetznerdedi
+          echo "${{ secrets.HETZNERDEDI_SSH_KEY }}" > ~/.ssh/hetznerdedi
           chmod 600 ~/.ssh/hetznerdedi
-          ssh-keyscan -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.HETZNERDEDI_SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to Hetzner Dedi
         run: |
-          ssh ${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }} "bash /home/jay/deploy-pomodoro.sh"
+          ssh ${{ secrets.HETZNERDEDI_SSH_USER }}@${{ secrets.HETZNERDEDI_SSH_HOST }} "bash /home/jay/deploy-pomodoro.sh"
